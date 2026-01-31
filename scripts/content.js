@@ -1,1 +1,1 @@
-alert("Content Script läuft");
+console.log("Hello World");
