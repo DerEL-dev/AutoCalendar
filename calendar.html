@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Weekly Schedule</title>
+<style>
+  body { margin:0; font-family:Arial,sans-serif; }
+  .schedule { display:flex; height:100vh; }
+
+  /* Time column */
+  .time-column {
+    width:80px;
+    border-right:2px solid #000;
+    overflow-y:scroll;
+  }
+  .time-column .time-header { height:40px; background:#f5f5f5; border-bottom:2px solid #000; }
+  .time { height:40px; line-height:40px; text-align:right; padding-right:6px; border-bottom:1px solid #ddd; font-size:12px; background:#fafafa; }
+
+  /* Calendar column */
+  .calendar {
+    flex:1;
+    display:flex;
+    flex-direction:column;
+    overflow:hidden;
+  }
+  .calendar-header {
+    display:flex;
+    height:40px;
+    border-bottom:2px solid #000;
+    background:#f5f5f5;
+  }
+  .day-title {
+    flex:1;
+    border-left:1px solid #000;
+    text-align:center;
+    line-height:40px;
+    font-weight:bold;
+  }
+
+  .days-container {
+    display:flex;
+    flex:1;
+    overflow-y:scroll;
+  }
+  .day {
+    flex:1;
+    border-left:1px solid #000;
+  }
+  .slot {
+    height:40px;
+    border-bottom:1px solid #ddd;
+  }
+</style>
+</head>
+<body>
+
+<div class="schedule">
+  <!-- Time column -->
+  <div class="time-column" id="timeColumn">
+    <div class="time-header"></div>
+  </div>
+
+  <!-- Calendar -->
+  <div class="calendar">
+    <div class="calendar-header">
+      <div class="day-title">Monday</div>
+      <div class="day-title">Tuesday</div>
+      <div class="day-title">Wednesday</div>
+      <div class="day-title">Thursday</div>
+      <div class="day-title">Friday</div>
+    </div>
+    <div class="days-container" id="daysContainer">
+      <div class="day"></div>
+      <div class="day"></div>
+      <div class="day"></div>
+      <div class="day"></div>
+      <div class="day"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+const timeColumn = document.getElementById('timeColumn');
+const daysContainer = document.getElementById('daysContainer');
+const dayDivs = daysContainer.children;
+
+// Generate times 00:00 to 24:00 in 15-min increments
+for(let h=0; h<=24; h++){
+  for(let q=0;q<4;q++){
+    if(h===24 && q>0) break;
+    const m=q*15;
+    const div=document.createElement('div');
+    div.className='time';
+    div.textContent=`${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}`;
+    timeColumn.appendChild(div);
+  }
+}
+
+// Generate 96 slots per day (15-min blocks)
+for(let d=0; d<dayDivs.length; d++){
+  for(let i=0; i<96; i++){
+    const slot=document.createElement('div');
+    slot.className='slot';
+    dayDivs[d].appendChild(slot);
+  }
+}
+
+// Sync scrolling
+daysContainer.addEventListener('scroll',()=>{ timeColumn.scrollTop = daysContainer.scrollTop; });
+timeColumn.addEventListener('scroll',()=>{ daysContainer.scrollTop = timeColumn.scrollTop; });
+</script>
+
+</body>
+</html>
