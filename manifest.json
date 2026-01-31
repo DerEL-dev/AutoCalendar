@@ -1,0 +1,14 @@
+{
+  "name": "AutoCalendar",
+  "description": "A Browser Extension that tracks which site The User visited",
+  "version": "1.0",
+  "manifest_version": 3,
+  "action": {
+    "default_popup": "popup.html"
+  },
+  "permissions": [
+    "idle",
+    "tabs",
+    "storage"
+  ]
+}
