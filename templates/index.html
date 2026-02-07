@@ -17,10 +17,44 @@
     canvas:active {
       cursor: grabbing;
     }
+    #addForm {
+      position: fixed;
+      top: 10px;
+      left: 10px;
+      background: rgba(0,0,0,0.8);
+      color: #fff;
+      padding: 10px;
+      border-radius: 8px;
+      font-family: sans-serif;
+    }
+    #addForm input {
+      margin: 2px;
+    }
+    #addForm button {
+      margin-top: 5px;
+    }
   </style>
 </head>
 <body>
+
 <canvas id="canvas"></canvas>
+
+<!-- Einfaches Formular um Termine hinzuzufügen -->
+<div id="addForm">
+  <div>
+    Tag (0=Mo,6=So): <input type="number" id="day" min="0" max="6" value="0">
+  </div>
+  <div>
+    Startzeit (z.B. 9.5=09:30): <input type="number" id="start" step="0.25" value="9.5">
+  </div>
+  <div>
+    Endzeit: <input type="number" id="end" step="0.25" value="10.5">
+  </div>
+  <div>
+    Titel: <input type="text" id="title" value="Meeting">
+  </div>
+  <button onclick="submitAppointment()">Termin hinzufügen</button>
+</div>
 
 <script>
 const canvas = document.getElementById("canvas");
@@ -76,6 +110,32 @@ canvas.addEventListener("wheel", e => {
   zoom = Math.min(Math.max(zoom, 0.2), 5);
 }, { passive: false });
 
+// Termine
+let appointments = [];
+
+// Funktion: Termin hinzufügen über API
+function submitAppointment() {
+  const day = parseInt(document.getElementById("day").value);
+  const start = parseFloat(document.getElementById("start").value);
+  const end = parseFloat(document.getElementById("end").value);
+  const title = document.getElementById("title").value;
+
+  fetch("/api/appointments", {
+    method: "POST",
+    headers: {"Content-Type": "application/json"},
+    body: JSON.stringify({day, start, end, title})
+  })
+  .then(res => res.json())
+  .then(() => fetchAppointments()); // Nach dem Hinzufügen aktualisieren
+}
+
+// Termine vom Backend abrufen
+function fetchAppointments() {
+  fetch("/api/appointments")
+    .then(res => res.json())
+    .then(data => appointments = data);
+}
+
 // Box-Funktion
 function drawRoundedBox(x, y, w, h, text) {
   const r = 12;
@@ -121,14 +181,13 @@ function draw() {
   ctx.scale(zoom, zoom);
   ctx.translate(-camX, -camY);
 
-  // 🔥 ENDLOSES GITTER (Modulo-Trick)
+  // 🔥 Endloses Gitter
   const startX = Math.floor((camX - canvas.width / zoom) / spacing) * spacing;
   const endX   = Math.floor((camX + canvas.width / zoom) / spacing) * spacing;
   const startY = Math.floor((camY - canvas.height / zoom) / spacing) * spacing;
   const endY   = Math.floor((camY + canvas.height / zoom) / spacing) * spacing;
 
   ctx.fillStyle = "#aaa";
-
   for (let x = startX; x <= endX; x += spacing) {
     for (let y = startY; y <= endY; y += spacing) {
       ctx.beginPath();
@@ -137,26 +196,41 @@ function draw() {
     }
   }
 
-
+  // Wochentage
   let weekdays = ["Montag","Dienstag","Mittwoch","Donnerstag","Freitag","Samstag","Sonntag"];
-    for (let x = 0; x < 70; x++) {
-        drawRoundedBox(
-            x*200,
-            0,
-            200,
-            50,
-            weekdays[x%7]
-        )
-    }
-    for (let y = 0; y < 4*24; y++) {
-        drawRoundedBox(
-            -100,
-            y*50+50,
-            100,
-            50,
-            String(y/4).split(".")[0] + String(":") + String(["00","15","30","45"][y%4])
-        )
-    }
+  for (let x = 0; x < 70; x++) {
+    drawRoundedBox(
+      x*200,
+      0,
+      200,
+      50,
+      weekdays[x%7]
+    );
+  }
+
+  // Uhrzeiten
+  for (let y = 0; y < 4*24; y++) {
+    drawRoundedBox(
+      -100,
+      y*50+50,
+      100,
+      50,
+      String(Math.floor(y/4)) + ":" + ["00","15","30","45"][y%4]
+    );
+  }
+
+  // Termine zeichnen
+  appointments.forEach(a => {
+    const x = a.day * 200 + 10;
+    const y = a.time * 200 + 50;
+    drawRoundedBox(
+      x,
+      y,
+      180,
+      45,
+      a.title
+    );
+  });
 
   ctx.restore();
 }
@@ -168,6 +242,10 @@ function loop() {
   requestAnimationFrame(loop);
 }
 loop();
+
+// Beim Start Termine laden
+fetchAppointments();
+
 </script>
 </body>
 </html>
